@@ -1,0 +1,27 @@
+# AGENTS.md
+
+This file provides guidance to agents when working with code in this repository.
+
+- This repository is documentation-first for deployment: the operative build flow is driven by customized MVS members created from [`base/exec/cust1.rexx`](base/exec/cust1.rexx), then submitted in the sequence documented in [`base/Building.md`](base/Building.md), not by local package tooling.
+- The USS bootstrap path is [`base/bin/install.sh`](base/bin/install.sh); it allocates target data sets and copies source members directly into MVS libraries named from `${USER}.GENAPP`, so changes to file extensions or member naming affect transfer/install behavior.
+- Workstation installs depend on per-directory transfer READMEs such as [`base/cntl/README.md`](base/cntl/README.md), [`base/src/README.md`](base/src/README.md), and [`base/wsim/README.md`](base/wsim/README.md); these require ASCII FTP transfer and, in some flows, stripping file extensions before upload.
+- There is no root-level automated lint/test harness. Validation is operational: initialize with transaction `LGSE`, then verify customer flow with `SSC1`; policy validation starts from `SSP1` as described in [`base/Testing.md`](base/Testing.md).
+- There is no single-test command in-repo; the closest project-specific “single test” is running one CICS transaction path at a time from the 3270 menus documented in [`base/Testing.md`](base/Testing.md).
+- Workspace type: IBM Z CICS application with COBOL, JCL, REXX, BMS, and shell assets.
+- Data dictionary: canonical [`bobz/DD.json`](bobz/DD.json) contains variable descriptions and business context for COBOL programs. Always reference this file when analyzing or modifying COBOL code. Additional semantic context can be inferred from copybooks such as [`base/src/lgcmarea.cpy`](base/src/lgcmarea.cpy) and [`base/src/lgpolicy.cpy`](base/src/lgpolicy.cpy).
+- COBOL layering is intentional and should be preserved: presentation programs such as [`base/src/lgtestc1.cbl`](base/src/lgtestc1.cbl) `LINK` to business logic, which then `LINK`s to data-access programs such as [`base/src/lgacus01.cbl`](base/src/lgacus01.cbl) → [`base/src/lgacdb01.cbl`](base/src/lgacdb01.cbl).
+- COMMAREA is the stable contract across layers; request routing is driven by `CA-REQUEST-ID` in [`base/src/lgcmarea.cpy`](base/src/lgcmarea.cpy), and callers commonly pass oversized lengths, so interface changes must be copybook-first and cross-program.
+- Customer add/update presentation logic normalizes input before linking by replacing low-values with spaces and uppercasing postcode in [`base/src/lgtestc1.cbl`](base/src/lgtestc1.cbl); preserve that behavior when documenting or extending flows.
+- Error handling is CICS-style, not exception-style: programs set `CA-RETURN-CODE`, `RETURN`, and in hard failures may `ABEND` or write diagnostics through [`base/src/lgstsq.cbl`](base/src/lgstsq.cbl)-mediated queue logging patterns shown in [`base/src/lgacus01.cbl`](base/src/lgacus01.cbl).
+- The architecture intentionally includes some non-best-practice constructs for demonstration purposes, including VSAM + Db2 two-phase commit and temporary-storage/named-counter usage; do not “simplify” these away in plans without checking [`base/Architecture.md`](base/Architecture.md).
+- Coding standards are not defined in a dedicated standards file; infer conventions from source: uppercase COBOL verbs, hyphenated data names, numeric return codes as character fields, and heavy copybook reuse for shared layouts.
+- Technical documentation locations: [`base/Architecture.md`](base/Architecture.md), [`base/Installation.md`](base/Installation.md), [`base/Building.md`](base/Building.md), [`base/Testing.md`](base/Testing.md), [`base/Reference.md`](base/Reference.md), plus onboarding/context in [`docs/ONBOARDING_GUIDE.md`](docs/ONBOARDING_GUIDE.md) and [`docs/REPOSITORY_STRUCTURE.md`](docs/REPOSITORY_STRUCTURE.md).
+
+| Program Name | Documentation File(s) | Description/Purpose |
+|--------------|------------------------|---------------------|
+| `LGTESTC1`, `LGTESTP1`-`LGTESTP4`, `SSMAP` | [`base/Architecture.md`](base/Architecture.md), [`base/Reference.md`](base/Reference.md), [`base/Testing.md`](base/Testing.md) | Presentation/menu layer and transaction entry behavior |
+| `LGACUS01`, `LGICUS01`, `LGUCUS01`, `LGAPOL01`, `LGIPOL01`, `LGUPOL01`, `LGDPOL01` | [`base/Architecture.md`](base/Architecture.md), [`base/Reference.md`](base/Reference.md) | Business-logic orchestration between UI and persistence |
+| `LGA*DB*`, `LGI*DB*`, `LGU*DB*`, `LGD*DB*`, `LGA*VS*`, `LGI*VS*`, `LGU*VS*`, `LGD*VS*` | [`base/Architecture.md`](base/Architecture.md), [`base/Building.md`](base/Building.md), [`base/Reference.md`](base/Reference.md) | Db2/VSAM persistence and two-phase commit behavior |
+| `LGSETUP`, `LGSTSQ`, `LGASTAT1`, `LGWEBST5` | [`base/Architecture.md`](base/Architecture.md), [`base/Testing.md`](base/Testing.md), [`base/Reference.md`](base/Reference.md) | Initialization, queue/error handling, and counter/statistics support |
+
+- Documentation sync rule: when changing a COBOL program family, verify its mapped docs still describe the flow, transactions, and resource assumptions; update this table when new program families or dedicated docs are added.

@@ -1,0 +1,386 @@
+{
+  "version": "2.0.0",
+  "entries": [
+    {
+      "name": "DB2-CUSTOMERNUM-INT",
+      "type": "variable",
+      "shortDescription": "Database 2 Customer Number Integer",
+      "longDescription": "A host variable representing the unique customer identifier as an integer, used for inserting new customer records into the DB2 CUSTOMER table and retrieving auto-generated identity values",
+      "origin": "AI",
+      "scope": [
+        {
+          "programName": "LGACDB01"
+        }
+      ]
+    },
+    {
+      "name": "CA-FIRST-NAME",
+      "type": "variable",
+      "shortDescription": "Communication Area First Name",
+      "longDescription": "The customer's first name passed through the communication area, used as input for creating new customer records in the database",
+      "origin": "AI",
+      "scope": [
+        {
+          "programName": "LGACDB01"
+        }
+      ]
+    },
+    {
+      "name": "CA-LAST-NAME",
+      "type": "variable",
+      "shortDescription": "Communication Area Last Name",
+      "longDescription": "The customer's last name passed through the communication area, used as input for creating new customer records in the database",
+      "origin": "AI",
+      "scope": [
+        {
+          "programName": "LGACDB01"
+        }
+      ]
+    },
+    {
+      "name": "CA-DOB",
+      "type": "variable",
+      "shortDescription": "Communication Area Date of Birth",
+      "longDescription": "The customer's date of birth in format suitable for DB2 DATE type, used for age verification and customer demographic information",
+      "origin": "AI",
+      "scope": [
+        {
+          "programName": "LGACDB01"
+        }
+      ]
+    },
+    {
+      "name": "CA-HOUSE-NAME",
+      "type": "variable",
+      "shortDescription": "Communication Area House Name",
+      "longDescription": "The name of the customer's residence (e.g., 'Rose Cottage'), part of the complete address information stored in the customer record",
+      "origin": "AI",
+      "scope": [
+        {
+          "programName": "LGACDB01"
+        }
+      ]
+    },
+    {
+      "name": "CA-HOUSE-NUM",
+      "type": "variable",
+      "shortDescription": "Communication Area House Number",
+      "longDescription": "The street number of the customer's residence, part of the complete address information stored in the customer record",
+      "origin": "AI",
+      "scope": [
+        {
+          "programName": "LGACDB01"
+        }
+      ]
+    },
+    {
+      "name": "CA-POSTCODE",
+      "type": "variable",
+      "shortDescription": "Communication Area Postcode",
+      "longDescription": "The postal code of the customer's address, critical for location-based services and geographic analysis",
+      "origin": "AI",
+      "scope": [
+        {
+          "programName": "LGACDB01"
+        }
+      ]
+    },
+    {
+      "name": "CA-PHONE-MOBILE",
+      "type": "variable",
+      "shortDescription": "Communication Area Phone Mobile",
+      "longDescription": "The customer's mobile phone number, serving as the primary contact method for customer communications",
+      "origin": "AI",
+      "scope": [
+        {
+          "programName": "LGACDB01"
+        }
+      ]
+    },
+    {
+      "name": "CA-PHONE-HOME",
+      "type": "variable",
+      "shortDescription": "Communication Area Phone Home",
+      "longDescription": "The customer's home phone number, serving as an alternative contact method for customer communications",
+      "origin": "AI",
+      "scope": [
+        {
+          "programName": "LGACDB01"
+        }
+      ]
+    },
+    {
+      "name": "CA-EMAIL-ADDRESS",
+      "type": "variable",
+      "shortDescription": "Communication Area Email Address",
+      "longDescription": "The customer's email address for digital communications and electronic correspondence",
+      "origin": "AI",
+      "scope": [
+        {
+          "programName": "LGACDB01"
+        }
+      ]
+    },
+    {
+      "name": "CA-RETURN-CODE",
+      "type": "variable",
+      "shortDescription": "Communication Area Return Code",
+      "longDescription": "A two-digit numeric code indicating the success or failure of operations (00=success, 90=SQL error, 98=invalid commarea length). In LGACUS01, this is initialized to '00' and may be set to '98' if the commarea length validation fails",
+      "origin": "AI",
+      "scope": [
+        {
+          "programName": "LGACDB01"
+        },
+        {
+          "programName": "LGACUS01"
+        }
+      ]
+    },
+    {
+      "name": "CA-CUSTOMER-NUM",
+      "type": "variable",
+      "shortDescription": "Communication Area Customer Number",
+      "longDescription": "The newly assigned customer number returned to the calling program after successful customer creation, used for subsequent operations",
+      "origin": "AI",
+      "scope": [
+        {
+          "programName": "LGACDB01"
+        }
+      ]
+    },
+    {
+      "name": "D2-CUSTOMER-NUM",
+      "type": "variable",
+      "shortDescription": "Database 2 Customer Number",
+      "longDescription": "The customer number passed to LGACDB02 program for establishing customer security credentials and linking to the security subsystem",
+      "origin": "AI",
+      "scope": [
+        {
+          "programName": "LGACDB01"
+        }
+      ]
+    },
+    {
+      "name": "D2-CUSTSECR-PASS",
+      "type": "variable",
+      "shortDescription": "Database 2 Customer Security Password",
+      "longDescription": "The initial security password hash assigned to the new customer account, used for authentication purposes",
+      "origin": "AI",
+      "scope": [
+        {
+          "programName": "LGACDB01"
+        }
+      ]
+    },
+    {
+      "name": "D2-CUSTSECR-STATE",
+      "type": "variable",
+      "shortDescription": "Database 2 Customer Security State",
+      "longDescription": "The security state indicator for the customer account (N=New, indicating initial setup), used to track security credential lifecycle",
+      "origin": "AI",
+      "scope": [
+        {
+          "programName": "LGACDB01"
+        }
+      ]
+    },
+    {
+      "name": "LGAC-NCS",
+      "type": "variable",
+      "shortDescription": "LGAC Named Counter Service",
+      "longDescription": "A flag indicating whether CICS Named Counter Service is available (ON) or unavailable (NO), controlling the customer number generation strategy",
+      "origin": "AI",
+      "scope": [
+        {
+          "programName": "LGACDB01"
+        }
+      ]
+    },
+    {
+      "name": "LastCustNum",
+      "type": "variable",
+      "shortDescription": "Last Customer Number",
+      "longDescription": "The most recent customer number retrieved from the CICS Named Counter Service, used as the next customer identifier when counter service is available",
+      "origin": "AI",
+      "scope": [
+        {
+          "programName": "LGACDB01"
+        }
+      ]
+    },
+    {
+      "name": "GENAcount",
+      "type": "variable",
+      "shortDescription": "GENA Counter",
+      "longDescription": "The name of the CICS Named Counter resource ('GENACUSTNUM') used for generating sequential customer numbers",
+      "origin": "AI",
+      "scope": [
+        {
+          "programName": "LGACDB01"
+        }
+      ]
+    },
+    {
+      "name": "CA-ERROR-MSG",
+      "type": "variable",
+      "shortDescription": "Communication Area Error Message",
+      "longDescription": "A formatted error message structure containing up to 90 bytes of the communication area data for diagnostic logging when errors occur. Used by both LGACUS01 and LGACDB01 for writing error details to temporary storage queues",
+      "origin": "AI",
+      "scope": [
+        {
+          "programName": "LGACDB01"
+        },
+        {
+          "programName": "LGACUS01"
+        }
+      ]
+    },
+    {
+      "name": "DFHCOMMAREA",
+      "type": "variable",
+      "shortDescription": "DFH Communication Area",
+      "longDescription": "The CICS-provided communication area structure used for passing data between programs, containing customer information and control fields defined in the LGCMAREA copybook. In LGACUS01, this serves as the business logic layer interface, receiving validated customer data and passing it to the database layer",
+      "origin": "AI",
+      "scope": [
+        {
+          "programName": "LGACDB01"
+        },
+        {
+          "programName": "LGACUS01"
+        }
+      ]
+    },
+    {
+      "name": "CA-NUM-POLICIES",
+      "type": "variable",
+      "shortDescription": "Communication Area Number of Policies",
+      "longDescription": "A counter field in the communication area that tracks the total number of insurance policies associated with a customer account, initialized to '00' and used for business reporting",
+      "origin": "AI",
+      "scope": [
+        {
+          "programName": "LGACUS01"
+        }
+      ]
+    },
+    {
+      "name": "LGACDB01",
+      "type": "variable",
+      "shortDescription": "LGAC Database 01",
+      "longDescription": "The program name literal ('LGACDB01') used in CICS LINK commands to invoke the customer database access program for persisting customer information to DB2",
+      "origin": "AI",
+      "scope": [
+        {
+          "programName": "LGACUS01"
+        }
+      ]
+    },
+    {
+      "name": "WS-REQUIRED-CA-LEN",
+      "type": "variable",
+      "shortDescription": "Working-Storage Required Communication Area Length",
+      "longDescription": "A computed field that holds the minimum required length of the communication area, calculated by adding the header length and customer data length, used to validate that the caller provided sufficient data",
+      "origin": "AI",
+      "scope": [
+        {
+          "programName": "LGACUS01"
+        }
+      ]
+    },
+    {
+      "name": "WS-CA-HEADER-LEN",
+      "type": "variable",
+      "shortDescription": "Working-Storage Communication Area Header Length",
+      "longDescription": "A constant field set to +18 bytes, representing the fixed-size header portion of the communication area that contains control information before the variable customer data",
+      "origin": "AI",
+      "scope": [
+        {
+          "programName": "LGACUS01"
+        }
+      ]
+    },
+    {
+      "name": "WS-CUSTOMER-LEN",
+      "type": "variable",
+      "shortDescription": "Working-Storage Customer Length",
+      "longDescription": "A field defined in the LGPOLICY copybook that specifies the size of the customer data structure, used in commarea length validation calculations",
+      "origin": "AI",
+      "scope": [
+        {
+          "programName": "LGACUS01"
+        }
+      ]
+    },
+    {
+      "name": "WS-HEADER",
+      "type": "variable",
+      "shortDescription": "Working-Storage Header",
+      "longDescription": "A diagnostic structure containing runtime information including eyecatcher ('LGACUS01------WS'), transaction ID, terminal ID, task number, commarea address pointer, and commarea length for debugging and operational monitoring",
+      "origin": "AI",
+      "scope": [
+        {
+          "programName": "LGACUS01"
+        }
+      ]
+    },
+    {
+      "name": "ERROR-MSG",
+      "type": "variable",
+      "shortDescription": "Error Message",
+      "longDescription": "A formatted error message structure containing date, time, program name ('LGACUS01'), and variable error details, used for writing diagnostic information to temporary storage queues via the LGSTSQ program",
+      "origin": "AI",
+      "scope": [
+        {
+          "programName": "LGACUS01"
+        }
+      ]
+    },
+    {
+      "name": "LGAPDB01",
+      "type": "variable",
+      "shortDescription": "LGAP Database 01",
+      "longDescription": "The program name literal ('LGAPDB01') used in CICS LINK commands to invoke the policy database access program for persisting insurance policy information (Endowment, House, Motor, Commercial) to DB2",
+      "origin": "AI",
+      "scope": [
+        {
+          "programName": "LGAPOL01"
+        }
+      ]
+    },
+    {
+      "name": "TIME1",
+      "type": "variable",
+      "shortDescription": "Time 1",
+      "longDescription": "A formatted time field (HH:MM:SS format) obtained from CICS FORMATTIME command, used in error message structures for diagnostic logging with precise timestamp information",
+      "origin": "AI",
+      "scope": [
+        {
+          "programName": "LGAPOL01"
+        }
+      ]
+    },
+    {
+      "name": "DATE1",
+      "type": "variable",
+      "shortDescription": "Date 1",
+      "longDescription": "A formatted date field (MM/DD/YYYY format) obtained from CICS FORMATTIME command, used in error message structures for diagnostic logging with precise date information",
+      "origin": "AI",
+      "scope": [
+        {
+          "programName": "LGAPOL01"
+        }
+      ]
+    },
+    {
+      "name": "ABS-TIME",
+      "type": "variable",
+      "shortDescription": "Absolute Time",
+      "longDescription": "A CICS absolute time value (binary fullword) obtained from ASKTIME command, representing the number of milliseconds since midnight January 1, 1900, used as input to FORMATTIME for converting to human-readable date and time formats",
+      "origin": "AI",
+      "scope": [
+        {
+          "programName": "LGAPOL01"
+        }
+      ]
+    }
+  ]
+}
