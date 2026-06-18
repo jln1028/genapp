@@ -1,0 +1,1682 @@
+%PDF-1.4
+%‚„œ”
+1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj
+2 0 obj << /Type /Pages /Kids [4 0 R 6 0 R 8 0 R 10 0 R 12 0 R 14 0 R 16 0 R 18 0 R 20 0 R 22 0 R 24 0 R 26 0 R 28 0 R 30 0 R 32 0 R] /Count 15 >> endobj
+3 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Courier >> endobj
+4 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 5 0 R /Resources << /Font << /F1 3 0 R >> >> >> endobj
+5 0 obj << /Length 3265 >> stream
+BT
+/F1 9 Tf
+50 742 Td
+11 TL
+(# Impact Analysis Report: Mainframe Performance Optimization and Cost Reduction) Tj
+T*
+() Tj
+T*
+(**Created**: 2026-06-18T21:14:27Z) Tj
+T*
+(**Author**: IBM Bob Premium Package for Z AI Assistant) Tj
+T*
+(**Analysis Method**: Local Workspace) Tj
+T*
+(**Workspace Alignment**: Not Applicable) Tj
+T*
+(**Confidence Level**: Medium) Tj
+T*
+() Tj
+T*
+(---) Tj
+T*
+() Tj
+T*
+(## 1. Change Summary) Tj
+T*
+() Tj
+T*
+(### Change Specification) Tj
+T*
+() Tj
+T*
+(**Title**: Mainframe Performance Optimization and Cost Reduction) Tj
+T*
+() Tj
+T*
+(**Type**: Refactor) Tj
+T*
+() Tj
+T*
+(**Description**: Analyze the existing CICS COBOL application to identify inefficient execution) Tj
+T*
+(paths, redundant logic, excessive runtime overhead, and suboptimal processing patterns.) Tj
+T*
+(Recommend optimized code structures that preserve business behavior while reducing CPU) Tj
+T*
+(consumption, improving throughput, and lowering operating cost.) Tj
+T*
+() Tj
+T*
+(**Business Objective**: Reduce MIPS consumption, lower ongoing mainframe operating costs,) Tj
+T*
+(improve online transaction response time, extend the useful life of the current z/OS) Tj
+T*
+(application assets, and prepare the codebase for future modernization without a full rewrite.) Tj
+T*
+() Tj
+T*
+(### System Context) Tj
+T*
+() Tj
+T*
+(**Architecture Overview**: The application follows a layered CICS design in which presentation) Tj
+T*
+(programs such as [`LGTESTC1`]\(base/src/lgtestc1.cbl\) invoke business orchestration programs) Tj
+T*
+(such as [`LGACUS01`]\(base/src/lgacus01.cbl\), which then invoke persistence programs such as) Tj
+T*
+([`LGACDB01`]\(base/src/lgacdb01.cbl\). Policy inquiry follows a similar layered pattern with) Tj
+T*
+([`LGIPDB01`]\(base/src/lgipdb01.cbl\) acting as a DB2-heavy retrieval component. Shared COMMAREA) Tj
+T*
+(contracts are defined through [`LGCMAREA`]\(base/src/lgcmarea.cpy\) and business structures) Tj
+T*
+(through [`LGPOLICY`]\(base/src/lgpolicy.cpy\).) Tj
+T*
+() Tj
+T*
+(**Key Technologies**: COBOL, CICS, DB2, VSAM, COMMAREA-based inter-program communication, CICS) Tj
+T*
+(named counter service, temporary-storage/queue-based diagnostics.) Tj
+T*
+() Tj
+T*
+(**Entry Points**: [`LGTESTC1`]\(base/src/lgtestc1.cbl\), [`LGTESTP1`]\(base/src/lgtestp1.cbl\),) Tj
+T*
+([`LGTESTP2`]\(base/src/lgtestp2.cbl\), [`LGTESTP3`]\(base/src/lgtestp3.cbl\),) Tj
+T*
+([`LGTESTP4`]\(base/src/lgtestp4.cbl\), with detailed hotspot review centered on) Tj
+T*
+([`LGTESTC1`]\(base/src/lgtestc1.cbl\), [`LGACUS01`]\(base/src/lgacus01.cbl\),) Tj
+T*
+([`LGACDB01`]\(base/src/lgacdb01.cbl\), and [`LGIPDB01`]\(base/src/lgipdb01.cbl\).) Tj
+T*
+() Tj
+T*
+(**Known Dependencies**: Repeated runtime calls to [`LGSTSQ`]\(base/src/lgstsq.cbl\) for) Tj
+T*
+(diagnostics, DB2 access in [`LGACDB01`]\(base/src/lgacdb01.cbl\) and) Tj
+T*
+([`LGIPDB01`]\(base/src/lgipdb01.cbl\), VSAM linkage from [`LGACDB01`]\(base/src/lgacdb01.cbl\) to) Tj
+T*
+([`LGACVS01`]\(base/src/lgacvs01.cbl\), and security follow-on processing from) Tj
+T*
+([`LGACDB01`]\(base/src/lgacdb01.cbl\) to [`LGACDB02`]\(base/src/lgacdb02.cbl\).) Tj
+T*
+() Tj
+T*
+(**Workspace Notes**: Analysis used the local TMI database referenced in [`.bobz/local-) Tj
+T*
+(settings.json`]\(.bobz/local-settings.json\) plus direct source review of) Tj
+ET
+endstream endobj
+6 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 7 0 R /Resources << /Font << /F1 3 0 R >> >> >> endobj
+7 0 obj << /Length 2839 >> stream
+BT
+/F1 9 Tf
+50 742 Td
+11 TL
+([`LGTESTC1`]\(base/src/lgtestc1.cbl\), [`LGACUS01`]\(base/src/lgacus01.cbl\),) Tj
+T*
+([`LGACDB01`]\(base/src/lgacdb01.cbl\), [`LGIPDB01`]\(base/src/lgipdb01.cbl\), and semantic context) Tj
+T*
+(from [`bobz/DD.json`]\(bobz/DD.json\).) Tj
+T*
+() Tj
+T*
+(---) Tj
+T*
+() Tj
+T*
+(## 2. Scope Definition) Tj
+T*
+() Tj
+T*
+(### In Scope) Tj
+T*
+() Tj
+T*
+(Components that WILL be modified or directly affected by an optimization initiative:) Tj
+T*
+() Tj
+T*
+(- [`LGTESTC1`]\(base/src/lgtestc1.cbl\): Customer online presentation flow and COMMAREA) Tj
+T*
+(preparation.) Tj
+T*
+(- [`LGACUS01`]\(base/src/lgacus01.cbl\): Customer add business orchestration layer.) Tj
+T*
+(- [`LGACDB01`]\(base/src/lgacdb01.cbl\): Customer insert persistence path with DB2, VSAM, named) Tj
+T*
+(counter, and security follow-on processing.) Tj
+T*
+(- [`LGIPDB01`]\(base/src/lgipdb01.cbl\): Policy inquiry DB2 retrieval path with multiple request-) Tj
+T*
+(type branches and cursor-based commercial retrieval.) Tj
+T*
+(- [`LGSTSQ`]\(base/src/lgstsq.cbl\): Diagnostic queue logging path repeatedly invoked from) Tj
+T*
+(business and persistence programs.) Tj
+T*
+(- Shared copybooks such as [`LGCMAREA`]\(base/src/lgcmarea.cpy\) and) Tj
+T*
+([`LGPOLICY`]\(base/src/lgpolicy.cpy\) if interface-preserving structural cleanup is required.) Tj
+T*
+() Tj
+T*
+(### Out of Scope) Tj
+T*
+() Tj
+T*
+(Components that should not be functionally redesigned as part of the first optimization wave:) Tj
+T*
+() Tj
+T*
+(- Business rules and transaction semantics exposed through [`CA-REQUEST-) Tj
+T*
+(ID`]\(base/src/lgcmarea.cpy\).) Tj
+T*
+(- Intentional architectural constructs called out in) Tj
+T*
+([`base/Architecture.md`]\(base/Architecture.md\), such as mixed VSAM + DB2 demonstration) Tj
+T*
+(patterns, unless optimization can be achieved without removing them.) Tj
+T*
+(- Full application rewrite, API replacement, or migration away from CICS/COMMAREA.) Tj
+T*
+() Tj
+T*
+(### System Boundaries) Tj
+T*
+() Tj
+T*
+(Where the change stops:) Tj
+T*
+() Tj
+T*
+(- **External Systems**: DB2 tables, VSAM datasets, CICS named counter service, and any) Tj
+T*
+(downstream security subsystem invoked through [`LGACDB02`]\(base/src/lgacdb02.cbl\).) Tj
+T*
+(- **APIs**: No external REST/API redesign is in scope.) Tj
+T*
+(- **Data Boundaries**: COMMAREA layouts remain the stable contract unless a later cross-program) Tj
+T*
+(change program is approved.) Tj
+T*
+() Tj
+T*
+(### Functional Area) Tj
+T*
+() Tj
+T*
+(**Primary Functional Area**: Customer maintenance and policy inquiry transaction processing.) Tj
+T*
+() Tj
+T*
+(**Business Function Summary**: The analyzed paths support online customer inquiry/add/update) Tj
+T*
+(and policy inquiry transactions. These are high-value online flows where CPU inefficiency) Tj
+T*
+(directly affects transaction cost and response time.) Tj
+T*
+() Tj
+T*
+(---) Tj
+ET
+endstream endobj
+8 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 9 0 R /Resources << /Font << /F1 3 0 R >> >> >> endobj
+9 0 obj << /Length 1383 >> stream
+BT
+/F1 9 Tf
+50 742 Td
+11 TL
+() Tj
+T*
+(## 3. System Overview) Tj
+T*
+() Tj
+T*
+(### System Context Diagram) Tj
+T*
+() Tj
+T*
+(```mermaid) Tj
+T*
+(graph TB) Tj
+T*
+(    subgraph "Presentation Layer") Tj
+T*
+(        T1[LGTESTC1]) Tj
+T*
+(        TP1[LGTESTP1-P4]) Tj
+T*
+(    end) Tj
+T*
+() Tj
+T*
+(    subgraph "Business Layer") Tj
+T*
+(        ACUS[LGACUS01]) Tj
+T*
+(        ICUS[LGICUS01]) Tj
+T*
+(        UCUS[LGUCUS01]) Tj
+T*
+(        IPOL[LGIPOL01]) Tj
+T*
+(    end) Tj
+T*
+() Tj
+T*
+(    subgraph "Persistence Layer") Tj
+T*
+(        ACDB[LGACDB01]) Tj
+T*
+(        IPDB[LGIPDB01]) Tj
+T*
+(        ACVS[LGACVS01]) Tj
+T*
+(        ACDB2[LGACDB02]) Tj
+T*
+(    end) Tj
+T*
+() Tj
+T*
+(    subgraph "Shared Runtime Services") Tj
+T*
+(        STSQ[LGSTSQ]) Tj
+T*
+(        NCS[CICS Named Counter]) Tj
+T*
+(    end) Tj
+T*
+() Tj
+T*
+(    subgraph "Data Stores") Tj
+T*
+(        DB2[\(DB2\)]) Tj
+T*
+(        VSAM[\(VSAM\)]) Tj
+T*
+(    end) Tj
+T*
+() Tj
+T*
+(    T1 --> ACUS) Tj
+T*
+(    T1 --> ICUS) Tj
+T*
+(    T1 --> UCUS) Tj
+T*
+(    TP1 --> IPOL) Tj
+T*
+(    ACUS --> ACDB) Tj
+T*
+(    ACDB --> ACVS) Tj
+T*
+(    ACDB --> ACDB2) Tj
+T*
+(    ACDB --> NCS) Tj
+T*
+(    ACDB --> DB2) Tj
+T*
+(    IPOL --> IPDB) Tj
+T*
+(    IPDB --> DB2) Tj
+T*
+(    ACUS --> STSQ) Tj
+T*
+(    ACDB --> STSQ) Tj
+T*
+(    IPDB --> STSQ) Tj
+T*
+(    ACVS --> STSQ) Tj
+T*
+() Tj
+T*
+(    style T1 fill:#ffcc99) Tj
+T*
+(    style ACUS fill:#ff9999) Tj
+ET
+endstream endobj
+10 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 11 0 R /Resources << /Font << /F1 3 0 R >> >> >> endobj
+11 0 obj << /Length 2400 >> stream
+BT
+/F1 9 Tf
+50 742 Td
+11 TL
+(    style ACDB fill:#ff9999) Tj
+T*
+(    style IPDB fill:#ff9999) Tj
+T*
+(    style STSQ fill:#ffcc99) Tj
+T*
+(```) Tj
+T*
+() Tj
+T*
+(**Legend**:) Tj
+T*
+() Tj
+T*
+(- ? Red: Primary optimization targets) Tj
+T*
+(- ? Orange: Secondary affected components) Tj
+T*
+(- ? White: Shared services and data stores) Tj
+T*
+() Tj
+T*
+(### Components Analyzed) Tj
+T*
+() Tj
+T*
+(**Total Programs Reviewed in Detail**: 4) Tj
+T*
+() Tj
+T*
+(**Key Programs**:) Tj
+T*
+() Tj
+T*
+(| Program | Description | Workspace Status | Impact Level |) Tj
+T*
+(| --- | --- | --- | --- |) Tj
+T*
+(| [`LGTESTC1`]\(base/src/lgtestc1.cbl\) | Customer menu and online transaction driver | Available) Tj
+T*
+(| Medium |) Tj
+T*
+(| [`LGACUS01`]\(base/src/lgacus01.cbl\) | Add-customer business orchestration | Available | High) Tj
+T*
+(|) Tj
+T*
+(| [`LGACDB01`]\(base/src/lgacdb01.cbl\) | Add-customer DB2/VSAM/security persistence path |) Tj
+T*
+(Available | High |) Tj
+T*
+(| [`LGIPDB01`]\(base/src/lgipdb01.cbl\) | Policy inquiry DB2 retrieval engine | Available | High) Tj
+T*
+(|) Tj
+T*
+(| [`LGSTSQ`]\(base/src/lgstsq.cbl\) | Diagnostic queue logging utility | Available by dependency) Tj
+T*
+(| High |) Tj
+T*
+() Tj
+T*
+(**Database Tables/Files**:) Tj
+T*
+() Tj
+T*
+(| Table/File | Purpose | Access Type | Impact Level |) Tj
+T*
+(| --- | --- | --- | --- |) Tj
+T*
+(| CUSTOMER | Customer master persistence | Read/Write | High |) Tj
+T*
+(| POLICY and subtype tables | Policy inquiry retrieval | Read | High |) Tj
+T*
+(| VSAM customer support structures via [`LGACVS01`]\(base/src/lgacvs01.cbl\) | Supplemental) Tj
+T*
+(persistence/update path | Read/Write | Medium |) Tj
+T*
+() Tj
+T*
+(**Observed Runtime Signals from Local SQL Analysis**:) Tj
+T*
+() Tj
+T*
+(| Program | SQL Refs | File Refs | Variable Refs | Outbound Calls | Inbound Calls |) Tj
+T*
+(| --- | ---: | ---: | ---: | ---: | ---: |) Tj
+T*
+(| [`LGIPDB01`]\(base/src/lgipdb01.cbl\) | 22 | 0 | 445 | 3 | 1 |) Tj
+T*
+(| [`LGAPDB01`]\(base/src/lgapdb01.cbl\) | 7 | 0 | 194 | 4 | 1 |) Tj
+T*
+(| [`LGUPDB01`]\(base/src/lgupdb01.cbl\) | 8 | 0 | 134 | 4 | 1 |) Tj
+T*
+(| [`LGTESTC1`]\(base/src/lgtestc1.cbl\) | 0 | 0 | 107 | 4 | 0 |) Tj
+T*
+(| [`LGACDB01`]\(base/src/lgacdb01.cbl\) | 2 | 0 | 82 | 5 | 1 |) Tj
+T*
+() Tj
+T*
+(These counts are not direct CPU measurements, but they are strong indicators of runtime density) Tj
+T*
+(and optimization opportunity.) Tj
+T*
+() Tj
+T*
+(---) Tj
+T*
+() Tj
+ET
+endstream endobj
+12 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 13 0 R /Resources << /Font << /F1 3 0 R >> >> >> endobj
+13 0 obj << /Length 2703 >> stream
+BT
+/F1 9 Tf
+50 742 Td
+11 TL
+(## 4. Dependency Analysis) Tj
+T*
+() Tj
+T*
+(### Upstream Dependencies) Tj
+T*
+() Tj
+T*
+(#### Input Programs/Services) Tj
+T*
+() Tj
+T*
+(| Component | Relationship | Data Provided | Impact |) Tj
+T*
+(| --- | --- | --- | --- |) Tj
+T*
+(| [`LGTESTC1`]\(base/src/lgtestc1.cbl\) | Calls [`LGACUS01`]\(base/src/lgacus01.cbl\),) Tj
+T*
+([`LGICUS01`]\(base/src/lgicus01.cbl\), [`LGUCUS01`]\(base/src/lgucus01.cbl\) | Customer transaction) Tj
+T*
+(COMMAREA | Presentation inefficiency amplifies online cost |) Tj
+T*
+(| [`LGTESTP1`]\(base/src/lgtestp1.cbl\), [`LGTESTP2`]\(base/src/lgtestp2.cbl\),) Tj
+T*
+([`LGTESTP3`]\(base/src/lgtestp3.cbl\), [`LGTESTP4`]\(base/src/lgtestp4.cbl\) | Call policy) Tj
+T*
+(orchestration programs | Policy inquiry/update COMMAREA | Drives repeated policy DB access) Tj
+T*
+(patterns |) Tj
+T*
+() Tj
+T*
+(#### Input Data Sources) Tj
+T*
+() Tj
+T*
+(| Source | Type | Data Provided | Impact |) Tj
+T*
+(| --- | --- | --- | --- |) Tj
+T*
+(| [`LGCMAREA`]\(base/src/lgcmarea.cpy\) | Copybook contract | Shared request/response payload |) Tj
+T*
+(Oversized COMMAREA usage increases movement cost |) Tj
+T*
+(| [`LGPOLICY`]\(base/src/lgpolicy.cpy\) | Copybook contract | Shared customer/policy structures |) Tj
+T*
+(Broad structure reuse can increase unnecessary initialization and movement |) Tj
+T*
+(| CICS Named Counter | Runtime service | Customer number generation | Adds synchronous service) Tj
+T*
+(call in add-customer path |) Tj
+T*
+() Tj
+T*
+(### Downstream Dependencies) Tj
+T*
+() Tj
+T*
+(#### Output Programs/Services) Tj
+T*
+() Tj
+T*
+(| Component | Relationship | Data Consumed | Impact |) Tj
+T*
+(| --- | --- | --- | --- |) Tj
+T*
+(| [`LGACDB01`]\(base/src/lgacdb01.cbl\) | Called by [`LGACUS01`]\(base/src/lgacus01.cbl\) |) Tj
+T*
+(Customer add COMMAREA | Primary persistence hotspot |) Tj
+T*
+(| [`LGACVS01`]\(base/src/lgacvs01.cbl\) | Called by [`LGACDB01`]\(base/src/lgacdb01.cbl\) |) Tj
+T*
+(Customer persistence data | Additional synchronous step in online path |) Tj
+T*
+(| [`LGACDB02`]\(base/src/lgacdb02.cbl\) | Called by [`LGACDB01`]\(base/src/lgacdb01.cbl\) |) Tj
+T*
+(Security setup payload | Adds large follow-on call after insert |) Tj
+T*
+(| [`LGSTSQ`]\(base/src/lgstsq.cbl\) | Called by multiple programs | Diagnostic payloads |) Tj
+T*
+(Repeated queue writes add CPU and I/O overhead |) Tj
+T*
+() Tj
+T*
+(#### Dependency Flow Diagram) Tj
+T*
+() Tj
+T*
+(```mermaid) Tj
+T*
+(graph LR) Tj
+T*
+(    T1[LGTESTC1] --> ACUS[LGACUS01]) Tj
+T*
+(    ACUS --> ACDB[LGACDB01]) Tj
+T*
+(    ACDB --> ACVS[LGACVS01]) Tj
+T*
+(    ACDB --> ACDB2[LGACDB02]) Tj
+T*
+(    ACUS --> STSQ[LGSTSQ]) Tj
+T*
+(    ACDB --> STSQ) Tj
+T*
+(    IPDB[LGIPDB01] --> STSQ) Tj
+T*
+(    ACDB --> DB2[\(DB2\)]) Tj
+ET
+endstream endobj
+14 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 15 0 R /Resources << /Font << /F1 3 0 R >> >> >> endobj
+15 0 obj << /Length 2375 >> stream
+BT
+/F1 9 Tf
+50 742 Td
+11 TL
+(    IPDB --> DB2) Tj
+T*
+() Tj
+T*
+(    style ACUS fill:#ff9999) Tj
+T*
+(    style ACDB fill:#ff9999) Tj
+T*
+(    style IPDB fill:#ff9999) Tj
+T*
+(    style STSQ fill:#ffcc99) Tj
+T*
+(```) Tj
+T*
+() Tj
+T*
+(### Internal Dependencies) Tj
+T*
+() Tj
+T*
+(#### Copybooks/Includes) Tj
+T*
+() Tj
+T*
+(| Copybook | Used By | Purpose | Impact |) Tj
+T*
+(| --- | --- | --- | --- |) Tj
+T*
+(| [`LGCMAREA`]\(base/src/lgcmarea.cpy\) | [`LGACUS01`]\(base/src/lgacus01.cbl\),) Tj
+T*
+([`LGACDB01`]\(base/src/lgacdb01.cbl\), [`LGIPDB01`]\(base/src/lgipdb01.cbl\),) Tj
+T*
+([`LGTESTC1`]\(base/src/lgtestc1.cbl\) | Shared COMMAREA contract | Any structural optimization) Tj
+T*
+(must preserve interface compatibility |) Tj
+T*
+(| [`LGPOLICY`]\(base/src/lgpolicy.cpy\) | [`LGACUS01`]\(base/src/lgacus01.cbl\),) Tj
+T*
+([`LGACDB01`]\(base/src/lgacdb01.cbl\), [`LGIPDB01`]\(base/src/lgipdb01.cbl\) | Shared business) Tj
+T*
+(structures | Large shared layouts may drive unnecessary initialization and movement |) Tj
+T*
+() Tj
+T*
+(#### Shared Runtime Pattern) Tj
+T*
+() Tj
+T*
+(A repeated pattern appears across [`LGACUS01`]\(base/src/lgacus01.cbl\),) Tj
+T*
+([`LGACDB01`]\(base/src/lgacdb01.cbl\), [`LGACVS01`]\(base/src/lgacvs01.cbl\),) Tj
+T*
+([`LGAPDB01`]\(base/src/lgapdb01.cbl\), [`LGUPDB01`]\(base/src/lgupdb01.cbl\),) Tj
+T*
+([`LGIPOL01`]\(base/src/lgipol01.cbl\), and others:) Tj
+T*
+() Tj
+T*
+(- Build timestamped error structure) Tj
+T*
+(- Link to [`LGSTSQ`]\(base/src/lgstsq.cbl\)) Tj
+T*
+(- Potentially copy up to 90 bytes of COMMAREA) Tj
+T*
+(- Link again to [`LGSTSQ`]\(base/src/lgstsq.cbl\)) Tj
+T*
+() Tj
+T*
+(This is architecturally consistent but operationally expensive when triggered frequently.) Tj
+T*
+() Tj
+T*
+(---) Tj
+T*
+() Tj
+T*
+(## 5. Impact Analysis) Tj
+T*
+() Tj
+T*
+(### Code-Level Impact) Tj
+T*
+() Tj
+T*
+(#### [`LGTESTC1`]\(base/src/lgtestc1.cbl\)) Tj
+T*
+() Tj
+T*
+(**Impact Type**: Modify) Tj
+T*
+() Tj
+T*
+(**Observed Inefficiencies**:) Tj
+T*
+() Tj
+T*
+(1. Repeated field-by-field MOVE sequences for inquiry and update flows.) Tj
+T*
+(2. Full `INSPECT COMM-AREA REPLACING ALL x'00' BY x'40'` before downstream calls, even though) Tj
+T*
+(only a subset of fields is relevant.) Tj
+T*
+(3. Repeated `FUNCTION UPPER-CASE\(CA-POSTCODE\)` in online path.) Tj
+T*
+(4. Multiple SEND/RECEIVE cycles and GO TO-driven flow that increase path length and maintenance) Tj
+T*
+(complexity.) Tj
+ET
+endstream endobj
+16 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 17 0 R /Resources << /Font << /F1 3 0 R >> >> >> endobj
+17 0 obj << /Length 2483 >> stream
+BT
+/F1 9 Tf
+50 742 Td
+11 TL
+() Tj
+T*
+(**Optimization Structure Recommendation**:) Tj
+T*
+() Tj
+T*
+(- Introduce paragraph-level normalization routines that sanitize only the fields actually) Tj
+T*
+(entered or changed.) Tj
+T*
+(- Replace repeated field mapping blocks with shared paragraphs for map-to-COMMAREA and) Tj
+T*
+(COMMAREA-to-map movement.) Tj
+T*
+(- Restrict low-value replacement to input fields rather than the entire COMMAREA.) Tj
+T*
+(- Preserve transaction behavior and map flow while reducing data movement and duplicated) Tj
+T*
+(instructions.) Tj
+T*
+() Tj
+T*
+(**Complexity**: Medium) Tj
+T*
+() Tj
+T*
+(---) Tj
+T*
+() Tj
+T*
+(#### [`LGACUS01`]\(base/src/lgacus01.cbl\)) Tj
+T*
+() Tj
+T*
+(**Impact Type**: Modify) Tj
+T*
+() Tj
+T*
+(**Observed Inefficiencies**:) Tj
+T*
+() Tj
+T*
+(1. Thin orchestration layer that performs initialization, length validation, and a single) Tj
+T*
+(`LINK` to [`LGACDB01`]\(base/src/lgacdb01.cbl\), adding an extra program hop for minimal business) Tj
+T*
+(logic.) Tj
+T*
+(2. Uses `INITIALIZE WS-HEADER` even though only a few fields are subsequently populated.) Tj
+T*
+(3. Passes `LENGTH\(32500\)` on the `EXEC CICS LINK` to [`LGACDB01`]\(base/src/lgacdb01.cbl\), far) Tj
+T*
+(larger than the validated required payload.) Tj
+T*
+(4. Error logging path performs time formatting and up to two queue writes through) Tj
+T*
+([`LGSTSQ`]\(base/src/lgstsq.cbl\).) Tj
+T*
+() Tj
+T*
+(**Optimization Structure Recommendation**:) Tj
+T*
+() Tj
+T*
+(- Collapse non-essential orchestration logic into a leaner paragraph structure or, if) Tj
+T*
+(governance permits, merge trivial wrapper behavior into caller/callee boundaries without) Tj
+T*
+(changing COMMAREA contract.) Tj
+T*
+(- Replace blanket initialization with targeted MOVE statements for fields actually used.) Tj
+T*
+(- Pass actual required COMMAREA length instead of a fixed oversized length where interface) Tj
+T*
+(compatibility allows.) Tj
+T*
+(- Gate expensive diagnostic logging behind severity or operational switch controls.) Tj
+T*
+() Tj
+T*
+(**Complexity**: Medium) Tj
+T*
+() Tj
+T*
+(---) Tj
+T*
+() Tj
+T*
+(#### [`LGACDB01`]\(base/src/lgacdb01.cbl\)) Tj
+T*
+() Tj
+T*
+(**Impact Type**: Modify) Tj
+T*
+() Tj
+T*
+(**Observed Inefficiencies**:) Tj
+T*
+() Tj
+T*
+(1. Performs named counter retrieval, DB2 insert, VSAM link, and security setup link in one) Tj
+T*
+(synchronous online path.) Tj
+T*
+(2. Uses two separate INSERT variants depending on named counter availability, duplicating SQL) Tj
+T*
+(and error handling logic.) Tj
+ET
+endstream endobj
+18 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 19 0 R /Resources << /Font << /F1 3 0 R >> >> >> endobj
+19 0 obj << /Length 2837 >> stream
+BT
+/F1 9 Tf
+50 742 Td
+11 TL
+(3. Passes `LENGTH\(225\)` to [`LGACVS01`]\(base/src/lgacvs01.cbl\) and `LENGTH\(32500\)` to) Tj
+T*
+([`LGACDB02`]\(base/src/lgacdb02.cbl\), suggesting oversized payload movement.) Tj
+T*
+(4. Hardcoded security payload setup occurs inline after persistence, extending response time.) Tj
+T*
+(5. Error path duplicates the same expensive timestamp + queue-write pattern.) Tj
+T*
+(6. `INITIALIZE WS-HEADER` and `INITIALIZE DB2-OUT-INTEGERS` are broader than necessary for the) Tj
+T*
+(actual path.) Tj
+T*
+() Tj
+T*
+(**Optimization Structure Recommendation**:) Tj
+T*
+() Tj
+T*
+(- Refactor the insert logic into a single SQL path with a pre-resolved customer number strategy) Tj
+T*
+(to eliminate duplicated INSERT blocks.) Tj
+T*
+(- Evaluate whether VSAM update and security setup can be deferred, decoupled, or conditionally) Tj
+T*
+(invoked after the critical online response path.) Tj
+T*
+(- Reduce COMMAREA lengths on `LINK` statements to actual used structures.) Tj
+T*
+(- Centralize error logging policy to avoid repeated queue writes for recoverable conditions.) Tj
+T*
+(- Separate critical-path persistence from secondary enrichment work.) Tj
+T*
+() Tj
+T*
+(**Complexity**: High) Tj
+T*
+() Tj
+T*
+(---) Tj
+T*
+() Tj
+T*
+(#### [`LGIPDB01`]\(base/src/lgipdb01.cbl\)) Tj
+T*
+() Tj
+T*
+(**Impact Type**: Modify) Tj
+T*
+() Tj
+T*
+(**Observed Inefficiencies**:) Tj
+T*
+() Tj
+T*
+(1. Highest SQL and variable activity among reviewed business programs.) Tj
+T*
+(2. Large `EVALUATE` dispatch with multiple request branches and repeated initialization of) Tj
+T*
+(subtype structures.) Tj
+T*
+(3. Multiple long paragraphs for each policy type, increasing instruction path length and) Tj
+T*
+(maintenance cost.) Tj
+T*
+(4. Scroll insensitive cursor declarations for commercial retrieval paths may be heavier than) Tj
+T*
+(required if access is forward-only or bounded.) Tj
+T*
+(5. Broad initialization of DB2 structures before request-type determination.) Tj
+T*
+(6. Repeated error logging pattern through [`LGSTSQ`]\(base/src/lgstsq.cbl\).) Tj
+T*
+() Tj
+T*
+(**Optimization Structure Recommendation**:) Tj
+T*
+() Tj
+T*
+(- Split request dispatch into smaller specialized entry paragraphs or separate programs by) Tj
+T*
+(policy type if operationally justified.) Tj
+T*
+(- Delay initialization until after request-type resolution so only the needed subtype structure) Tj
+T*
+(is prepared.) Tj
+T*
+(- Reassess cursor type and fetch strategy for commercial inquiry paths; use lighter cursor) Tj
+T*
+(semantics if scrollability is not required.) Tj
+T*
+(- Consolidate repeated retrieval/error-handling scaffolding into shared paragraphs.) Tj
+T*
+(- Consider caching or reducing repeated data transformations for high-frequency inquiry) Tj
+T*
+(requests.) Tj
+T*
+() Tj
+T*
+(**Complexity**: High) Tj
+T*
+() Tj
+T*
+(---) Tj
+T*
+() Tj
+T*
+(### Application-Level Impact) Tj
+ET
+endstream endobj
+20 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 21 0 R /Resources << /Font << /F1 3 0 R >> >> >> endobj
+21 0 obj << /Length 2815 >> stream
+BT
+/F1 9 Tf
+50 742 Td
+11 TL
+() Tj
+T*
+(#### Interface Changes) Tj
+T*
+() Tj
+T*
+(| Interface | Change | Affected Programs | Impact |) Tj
+T*
+(| --- | --- | --- | --- |) Tj
+T*
+(| COMMAREA lengths on `LINK` | Potential reduction from fixed oversized lengths to actual used) Tj
+T*
+(lengths | [`LGTESTC1`]\(base/src/lgtestc1.cbl\), [`LGACUS01`]\(base/src/lgacus01.cbl\),) Tj
+T*
+([`LGACDB01`]\(base/src/lgacdb01.cbl\), downstream callees | Medium |) Tj
+T*
+(| Diagnostic logging invocation policy | Potential conditionalization or throttling | Programs) Tj
+T*
+(calling [`LGSTSQ`]\(base/src/lgstsq.cbl\) | High |) Tj
+T*
+(| Internal paragraph structure | Refactor only, no external contract change | Reviewed programs) Tj
+T*
+(| Low |) Tj
+T*
+() Tj
+T*
+(#### Data Contract Changes) Tj
+T*
+() Tj
+T*
+(No business data contract change is required for the recommended first-wave optimizations. The) Tj
+T*
+(preferred strategy is to preserve [`LGCMAREA`]\(base/src/lgcmarea.cpy\) and) Tj
+T*
+([`LGPOLICY`]\(base/src/lgpolicy.cpy\) while reducing unnecessary movement, initialization, and) Tj
+T*
+(synchronous work.) Tj
+T*
+() Tj
+T*
+(### System-Level Impact) Tj
+T*
+() Tj
+T*
+(#### Database and Runtime Service Impact) Tj
+T*
+() Tj
+T*
+(| Component | Current Pattern | Optimization Opportunity | Impact |) Tj
+T*
+(| --- | --- | --- | --- |) Tj
+T*
+(| DB2 in [`LGIPDB01`]\(base/src/lgipdb01.cbl\) | Multiple request-specific retrieval paths and) Tj
+T*
+(cursor usage | Reduce unnecessary initialization, simplify cursor strategy, isolate hot request) Tj
+T*
+(types | High |) Tj
+T*
+(| DB2 in [`LGACDB01`]\(base/src/lgacdb01.cbl\) | Duplicated insert logic | Unify insert path and) Tj
+T*
+(reduce branch overhead | Medium |) Tj
+T*
+(| CICS Named Counter | Synchronous customer number retrieval | Keep functionally, but isolate) Tj
+T*
+(and minimize surrounding overhead | Medium |) Tj
+T*
+(| [`LGSTSQ`]\(base/src/lgstsq.cbl\) queue logging | Repeated synchronous diagnostic writes |) Tj
+T*
+(Throttle, consolidate, or severity-gate logging | High |) Tj
+T*
+() Tj
+T*
+(### Operational Impact) Tj
+T*
+() Tj
+T*
+(#### Build/Deployment) Tj
+T*
+() Tj
+T*
+(- Recompilation required for modified COBOL programs.) Tj
+T*
+(- No mandatory copybook contract change in the first optimization wave.) Tj
+T*
+(- Deployment sequencing should prioritize online customer path first because you confirmed) Tj
+T*
+(online CICS response time is the primary objective.) Tj
+T*
+() Tj
+T*
+(#### Runtime) Tj
+T*
+() Tj
+T*
+(- Expected CPU reduction from less data movement, fewer redundant instructions, and reduced) Tj
+T*
+(synchronous logging.) Tj
+T*
+(- Expected response-time improvement in online customer add/update/inquiry flows.) Tj
+T*
+(- Potential throughput improvement if DB2-heavy inquiry paths are simplified and cursor usage) Tj
+T*
+(is reduced.) Tj
+T*
+() Tj
+T*
+(#### Scheduling) Tj
+ET
+endstream endobj
+22 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 23 0 R /Resources << /Font << /F1 3 0 R >> >> >> endobj
+23 0 obj << /Length 1999 >> stream
+BT
+/F1 9 Tf
+50 742 Td
+11 TL
+() Tj
+T*
+(- Minimal batch scheduling impact in the first wave.) Tj
+T*
+(- If policy inquiry optimizations are later extended to reporting or batch consumers,) Tj
+T*
+(additional regression review will be needed.) Tj
+T*
+() Tj
+T*
+(---) Tj
+T*
+() Tj
+T*
+(## 6. Change Propagation Map) Tj
+T*
+() Tj
+T*
+(### Complete Ripple Effect) Tj
+T*
+() Tj
+T*
+(```mermaid) Tj
+T*
+(graph TD) Tj
+T*
+(    START[Optimization Initiative] --> P1[Reduce redundant data movement]) Tj
+T*
+(    START --> P2[Reduce synchronous logging overhead]) Tj
+T*
+(    START --> P3[Simplify DB2-heavy paths]) Tj
+T*
+(    START --> P4[Shorten online critical path]) Tj
+T*
+() Tj
+T*
+(    P1 --> T1[LGTESTC1 field mapping cleanup]) Tj
+T*
+(    P1 --> A1[LGACUS01 targeted initialization]) Tj
+T*
+(    P1 --> A2[LGACDB01 smaller LINK lengths]) Tj
+T*
+() Tj
+T*
+(    P2 --> L1[Conditional LGSTSQ usage]) Tj
+T*
+(    L1 --> C1[Lower CPU and queue I/O]) Tj
+T*
+(    L1 --> C2[Faster online response]) Tj
+T*
+() Tj
+T*
+(    P3 --> I1[LGIPDB01 request-path specialization]) Tj
+T*
+(    P3 --> I2[Cursor strategy review]) Tj
+T*
+(    I1 --> C3[Lower DB2 processing overhead]) Tj
+T*
+() Tj
+T*
+(    P4 --> D1[Defer non-critical follow-on work in LGACDB01]) Tj
+T*
+(    D1 --> C4[Shorter customer add transaction path]) Tj
+T*
+() Tj
+T*
+(    C1 --> OUT[Lower MIPS / lower operating cost]) Tj
+T*
+(    C2 --> OUT) Tj
+T*
+(    C3 --> OUT) Tj
+T*
+(    C4 --> OUT) Tj
+T*
+() Tj
+T*
+(    style START fill:#ff0000) Tj
+T*
+(    style L1 fill:#ff9999) Tj
+T*
+(    style I1 fill:#ff9999) Tj
+T*
+(    style D1 fill:#ff9999) Tj
+T*
+(    style OUT fill:#99ff99) Tj
+T*
+(```) Tj
+T*
+() Tj
+T*
+(### Detailed Propagation Paths) Tj
+T*
+() Tj
+T*
+(#### Path 1: Online Customer Add Path) Tj
+T*
+() Tj
+T*
+([`LGTESTC1`]\(base/src/lgtestc1.cbl\)) Tj
+T*
+(? reduce full-COMMAREA sanitization and duplicate field movement) Tj
+T*
+(? [`LGACUS01`]\(base/src/lgacus01.cbl\)) Tj
+T*
+(? reduce wrapper overhead and oversized `LINK` length) Tj
+T*
+(? [`LGACDB01`]\(base/src/lgacdb01.cbl\)) Tj
+ET
+endstream endobj
+24 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 25 0 R /Resources << /Font << /F1 3 0 R >> >> >> endobj
+25 0 obj << /Length 3084 >> stream
+BT
+/F1 9 Tf
+50 742 Td
+11 TL
+(? unify insert logic and shorten synchronous follow-on work) Tj
+T*
+(? lower CPU per transaction and faster online response) Tj
+T*
+() Tj
+T*
+(#### Path 2: Diagnostic Overhead Reduction) Tj
+T*
+() Tj
+T*
+(Multiple business/persistence programs) Tj
+T*
+(? reduce unconditional timestamp formatting and queue writes) Tj
+T*
+(? fewer calls to [`LGSTSQ`]\(base/src/lgstsq.cbl\)) Tj
+T*
+(? lower CICS service overhead and queue I/O) Tj
+T*
+(? lower MIPS and improved throughput) Tj
+T*
+() Tj
+T*
+(#### Path 3: Policy Inquiry Optimization) Tj
+T*
+() Tj
+T*
+([`LGIPDB01`]\(base/src/lgipdb01.cbl\)) Tj
+T*
+(? specialize request handling and reduce broad initialization) Tj
+T*
+(? simplify cursor/fetch behavior where possible) Tj
+T*
+(? reduce DB2 and COBOL instruction path length) Tj
+T*
+(? improve inquiry throughput and reduce CPU cost) Tj
+T*
+() Tj
+T*
+(---) Tj
+T*
+() Tj
+T*
+(## 7. Risk Assessment) Tj
+T*
+() Tj
+T*
+(### Risk Assessment Table) Tj
+T*
+() Tj
+T*
+(| Risk ID | Description | Category | Likelihood | Impact | Risk Level | Mitigation Strategy |) Tj
+T*
+(| --- | --- | --- | --- | --- | --- | --- |) Tj
+T*
+(| R1 | Reducing COMMAREA lengths on `LINK` breaks callers/callees that rely on oversized) Tj
+T*
+(lengths | Regression | Medium | High | **High** | Validate actual required lengths against) Tj
+T*
+([`LGCMAREA`]\(base/src/lgcmarea.cpy\) and test all linked paths end-to-end |) Tj
+T*
+(| R2 | Throttling [`LGSTSQ`]\(base/src/lgstsq.cbl\) logging removes diagnostics needed for) Tj
+T*
+(production support | Operational | Medium | Medium | **Medium** | Introduce severity-based or) Tj
+T*
+(switch-based logging rather than removing logging outright |) Tj
+T*
+(| R3 | Refactoring [`LGACDB01`]\(base/src/lgacdb01.cbl\) synchronous path changes transaction) Tj
+T*
+(timing or commit assumptions | Data Integrity | Medium | High | **High** | Preserve syncpoint) Tj
+T*
+(semantics and validate DB2/VSAM behavior against [`base/Architecture.md`]\(base/Architecture.md\)) Tj
+T*
+(|) Tj
+T*
+(| R4 | Cursor simplification in [`LGIPDB01`]\(base/src/lgipdb01.cbl\) changes result navigation) Tj
+T*
+(behavior | Functionality | Medium | Medium | **Medium** | Confirm whether scroll semantics are) Tj
+T*
+(actually required before changing cursor type |) Tj
+T*
+(| R5 | Replacing blanket `INITIALIZE` or `INSPECT` with targeted logic misses fields previously) Tj
+T*
+(cleaned implicitly | Regression | Medium | Medium | **Medium** | Build field-level regression) Tj
+T*
+(tests for customer add/update/inquiry flows |) Tj
+T*
+(| R6 | Splitting or specializing policy inquiry logic increases code volume or divergence |) Tj
+T*
+(Maintainability | Low | Medium | **Low** | Use shared paragraphs/templates and keep request-) Tj
+T*
+(specific logic isolated but consistent |) Tj
+T*
+() Tj
+T*
+(### Critical Risks) Tj
+T*
+() Tj
+T*
+(#### R1: Oversized COMMAREA Dependency Risk) Tj
+T*
+() Tj
+T*
+(The repository guidance explicitly notes that callers commonly pass oversized lengths. Any) Tj
+T*
+(optimization that reduces `LENGTH\(32500\)` patterns must be validated across all callers and) Tj
+T*
+(callees.) Tj
+ET
+endstream endobj
+26 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 27 0 R /Resources << /Font << /F1 3 0 R >> >> >> endobj
+27 0 obj << /Length 2712 >> stream
+BT
+/F1 9 Tf
+50 742 Td
+11 TL
+() Tj
+T*
+(#### R3: Transaction Semantics Risk) Tj
+T*
+() Tj
+T*
+([`LGACDB01`]\(base/src/lgacdb01.cbl\) participates in a path that includes DB2 insert, VSAM) Tj
+T*
+(linkage, and security follow-on processing. Shortening the critical path is desirable, but not) Tj
+T*
+(at the expense of transactional correctness.) Tj
+T*
+() Tj
+T*
+(---) Tj
+T*
+() Tj
+T*
+(## 8. Optimization Recommendation Set) Tj
+T*
+() Tj
+T*
+(### Priority 1: Reduce Synchronous Logging Overhead) Tj
+T*
+() Tj
+T*
+(**Target Components**: [`LGACUS01`]\(base/src/lgacus01.cbl\),) Tj
+T*
+([`LGACDB01`]\(base/src/lgacdb01.cbl\), [`LGIPDB01`]\(base/src/lgipdb01.cbl\),) Tj
+T*
+([`LGSTSQ`]\(base/src/lgstsq.cbl\)) Tj
+T*
+() Tj
+T*
+(**Why**: Local dependency analysis shows repeated runtime calls to) Tj
+T*
+([`LGSTSQ`]\(base/src/lgstsq.cbl\) across core business paths. You confirmed this overhead should) Tj
+T*
+(be treated as production-relevant.) Tj
+T*
+() Tj
+T*
+(**Recommended Improved Structure**:) Tj
+T*
+() Tj
+T*
+(- Introduce a lightweight logging policy paragraph or switch.) Tj
+T*
+(- Log only high-severity failures synchronously.) Tj
+T*
+(- Consolidate duplicate queue writes into a single structured diagnostic record where possible.) Tj
+T*
+(- Avoid formatting date/time unless a log record will actually be emitted.) Tj
+T*
+() Tj
+T*
+(**Expected Benefit**: Lower CPU and CICS service overhead across many transactions.) Tj
+T*
+() Tj
+T*
+(### Priority 2: Eliminate Redundant Data Movement in Online Customer Flow) Tj
+T*
+() Tj
+T*
+(**Target Components**: [`LGTESTC1`]\(base/src/lgtestc1.cbl\), [`LGACUS01`]\(base/src/lgacus01.cbl\)) Tj
+T*
+() Tj
+T*
+(**Recommended Improved Structure**:) Tj
+T*
+() Tj
+T*
+(- Replace repeated field MOVE blocks with reusable mapping paragraphs.) Tj
+T*
+(- Sanitize only populated input fields instead of the entire COMMAREA.) Tj
+T*
+(- Replace broad `INITIALIZE` usage with targeted setup for fields actually consumed.) Tj
+T*
+() Tj
+T*
+(**Expected Benefit**: Reduced instruction count and improved online response time.) Tj
+T*
+() Tj
+T*
+(### Priority 3: Shorten the Critical Path in [`LGACDB01`]\(base/src/lgacdb01.cbl\)) Tj
+T*
+() Tj
+T*
+(**Recommended Improved Structure**:) Tj
+T*
+() Tj
+T*
+(- Unify the two INSERT branches into one normalized persistence routine.) Tj
+T*
+(- Reassess whether [`LGACVS01`]\(base/src/lgacvs01.cbl\) and [`LGACDB02`]\(base/src/lgacdb02.cbl\)) Tj
+T*
+(must both remain synchronous in the online response path.) Tj
+T*
+(- Reduce oversized `LINK` lengths to actual payload sizes where safe.) Tj
+T*
+() Tj
+T*
+(**Expected Benefit**: Lower elapsed time and CPU per add-customer transaction.) Tj
+T*
+() Tj
+T*
+(### Priority 4: Specialize and Simplify [`LGIPDB01`]\(base/src/lgipdb01.cbl\)) Tj
+ET
+endstream endobj
+28 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 29 0 R /Resources << /Font << /F1 3 0 R >> >> >> endobj
+29 0 obj << /Length 2663 >> stream
+BT
+/F1 9 Tf
+50 742 Td
+11 TL
+() Tj
+T*
+(**Recommended Improved Structure**:) Tj
+T*
+() Tj
+T*
+(- Delay subtype initialization until request type is known.) Tj
+T*
+(- Break large request branches into smaller specialized paragraphs or modules.) Tj
+T*
+(- Review cursor declarations and fetch patterns for lighter-weight alternatives.) Tj
+T*
+() Tj
+T*
+(**Expected Benefit**: Lower DB2 and COBOL processing overhead in policy inquiry.) Tj
+T*
+() Tj
+T*
+(---) Tj
+T*
+() Tj
+T*
+(## 9. Confidence Assessment) Tj
+T*
+() Tj
+T*
+(### Overall Confidence: Medium) Tj
+T*
+() Tj
+T*
+(### Justification) Tj
+T*
+() Tj
+T*
+(**Strengths**:) Tj
+T*
+() Tj
+T*
+(- Local SQL analysis identified clear runtime hotspots and repeated call patterns.) Tj
+T*
+(- Source review confirmed concrete inefficiencies in [`LGTESTC1`]\(base/src/lgtestc1.cbl\),) Tj
+T*
+([`LGACUS01`]\(base/src/lgacus01.cbl\), [`LGACDB01`]\(base/src/lgacdb01.cbl\), and) Tj
+T*
+([`LGIPDB01`]\(base/src/lgipdb01.cbl\).) Tj
+T*
+(- [`bobz/DD.json`]\(bobz/DD.json\) provided semantic context for customer add path variables,) Tj
+T*
+(especially in [`LGACDB01`]\(base/src/lgacdb01.cbl\) and [`LGACUS01`]\(base/src/lgacus01.cbl\).) Tj
+T*
+(- User clarified that [`LGSTSQ`]\(base/src/lgstsq.cbl\) overhead is production-relevant and that) Tj
+T*
+(online CICS response time is the primary optimization objective.) Tj
+T*
+() Tj
+T*
+(**Weaknesses**:) Tj
+T*
+() Tj
+T*
+(- No SMF, CICS monitoring, or DB2 accounting traces were available, so hotspot ranking is) Tj
+T*
+(structural rather than measured.) Tj
+T*
+(- Not all downstream programs were reviewed in source detail.) Tj
+T*
+(- The paragraph metadata output appears to contain some generic descendant naming artifacts, so) Tj
+T*
+(paragraph-level conclusions were cross-checked against source rather than taken literally.) Tj
+T*
+() Tj
+T*
+(### Recommendations to Increase Confidence) Tj
+T*
+() Tj
+T*
+(1. Capture CICS transaction monitoring and DB2 accounting data for `SSC1` and policy inquiry) Tj
+T*
+(transactions.) Tj
+T*
+(2. Measure frequency of [`LGSTSQ`]\(base/src/lgstsq.cbl\) invocation in production-like) Tj
+T*
+(workloads.) Tj
+T*
+(3. Validate actual COMMAREA lengths used at each `LINK` boundary before reducing them.) Tj
+T*
+(4. Run focused transaction-path tests from [`base/Testing.md`]\(base/Testing.md\) after each) Tj
+T*
+(optimization wave.) Tj
+T*
+() Tj
+T*
+(---) Tj
+T*
+() Tj
+T*
+(## 10. Effort Estimation) Tj
+T*
+() Tj
+T*
+(| Work Item | Complexity | Estimated Effort |) Tj
+T*
+(| --- | --- | --- |) Tj
+T*
+(| Logging policy optimization around [`LGSTSQ`]\(base/src/lgstsq.cbl\) | Medium | 1-2 days |) Tj
+T*
+(| [`LGTESTC1`]\(base/src/lgtestc1.cbl\) data movement cleanup | Medium | 1-2 days |) Tj
+ET
+endstream endobj
+30 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 31 0 R /Resources << /Font << /F1 3 0 R >> >> >> endobj
+31 0 obj << /Length 3004 >> stream
+BT
+/F1 9 Tf
+50 742 Td
+11 TL
+(| [`LGACUS01`]\(base/src/lgacus01.cbl\) wrapper/path cleanup | Medium | 1 day |) Tj
+T*
+(| [`LGACDB01`]\(base/src/lgacdb01.cbl\) critical-path refactor | High | 3-5 days |) Tj
+T*
+(| [`LGIPDB01`]\(base/src/lgipdb01.cbl\) request-path simplification | High | 4-6 days |) Tj
+T*
+(| Regression validation using transaction flows in [`base/Testing.md`]\(base/Testing.md\) | High) Tj
+T*
+(| 3-4 days |) Tj
+T*
+() Tj
+T*
+(**Total Estimated Effort**: 13-20 working days for a first optimization wave.) Tj
+T*
+() Tj
+T*
+(---) Tj
+T*
+() Tj
+T*
+(## 11. Next Steps) Tj
+T*
+() Tj
+T*
+(1. Start with a focused implementation plan for the customer online path:) Tj
+T*
+([`LGTESTC1`]\(base/src/lgtestc1.cbl\) ? [`LGACUS01`]\(base/src/lgacus01.cbl\) ?) Tj
+T*
+([`LGACDB01`]\(base/src/lgacdb01.cbl\).) Tj
+T*
+(2. Treat [`LGSTSQ`]\(base/src/lgstsq.cbl\) optimization as a cross-cutting concern in the same) Tj
+T*
+(wave.) Tj
+T*
+(3. Defer [`LGIPDB01`]\(base/src/lgipdb01.cbl\) into a second wave unless policy inquiry is a) Tj
+T*
+(known production hotspot.) Tj
+T*
+(4. Validate each optimization using the operational transaction flows documented in) Tj
+T*
+([`base/Testing.md`]\(base/Testing.md\).) Tj
+T*
+(5. After approval, create a formal implementation plan before any code changes.) Tj
+T*
+() Tj
+T*
+(---) Tj
+T*
+() Tj
+T*
+(## Appendix A: Key Source Observations) Tj
+T*
+() Tj
+T*
+(- [`LGACUS01`]\(base/src/lgacus01.cbl\) line 134 uses `EXEC CICS LINK Program\(LGACDB01\)` with) Tj
+T*
+(`LENGTH\(32500\)`.) Tj
+T*
+(- [`LGACDB01`]\(base/src/lgacdb01.cbl\) lines 221-283 contain duplicated INSERT logic split by) Tj
+T*
+(named counter availability.) Tj
+T*
+(- [`LGACDB01`]\(base/src/lgacdb01.cbl\) lines 174-189 add synchronous follow-on calls to) Tj
+T*
+([`LGACVS01`]\(base/src/lgacvs01.cbl\) and [`LGACDB02`]\(base/src/lgacdb02.cbl\) after insert.) Tj
+T*
+(- [`LGTESTC1`]\(base/src/lgtestc1.cbl\) lines 125 and 187 sanitize the full COMMAREA with) Tj
+T*
+(`INSPECT`.) Tj
+T*
+(- [`LGIPDB01`]\(base/src/lgipdb01.cbl\) lines 277-310 dispatch multiple request types after broad) Tj
+T*
+(initialization at lines 242-245.) Tj
+T*
+() Tj
+T*
+(---) Tj
+T*
+() Tj
+T*
+(## Appendix B: Local Analysis Highlights) Tj
+T*
+() Tj
+T*
+(### Runtime Call Patterns) Tj
+T*
+() Tj
+T*
+(- [`LGACUS01`]\(base/src/lgacus01.cbl\) ? [`LGSTSQ`]\(base/src/lgstsq.cbl\): 3) Tj
+T*
+(- [`LGACUS01`]\(base/src/lgacus01.cbl\) ? [`LGACDB01`]\(base/src/lgacdb01.cbl\): 1) Tj
+T*
+(- [`LGACDB01`]\(base/src/lgacdb01.cbl\) ? [`LGSTSQ`]\(base/src/lgstsq.cbl\): 3) Tj
+T*
+(- [`LGACDB01`]\(base/src/lgacdb01.cbl\) ? [`LGACDB02`]\(base/src/lgacdb02.cbl\): 1) Tj
+T*
+(- [`LGACDB01`]\(base/src/lgacdb01.cbl\) ? [`LGACVS01`]\(base/src/lgacvs01.cbl\): 1) Tj
+T*
+(- [`LGTESTC1`]\(base/src/lgtestc1.cbl\) ? [`LGICUS01`]\(base/src/lgicus01.cbl\): 2) Tj
+T*
+(- [`LGTESTC1`]\(base/src/lgtestc1.cbl\) ? [`LGACUS01`]\(base/src/lgacus01.cbl\): 1) Tj
+T*
+(- [`LGTESTC1`]\(base/src/lgtestc1.cbl\) ? [`LGUCUS01`]\(base/src/lgucus01.cbl\): 1) Tj
+T*
+() Tj
+T*
+(### Paragraph Coverage Reviewed) Tj
+ET
+endstream endobj
+32 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 33 0 R /Resources << /Font << /F1 3 0 R >> >> >> endobj
+33 0 obj << /Length 527 >> stream
+BT
+/F1 9 Tf
+50 742 Td
+11 TL
+() Tj
+T*
+(Paragraph metadata was reviewed for [`LGACUS01`]\(base/src/lgacus01.cbl\),) Tj
+T*
+([`LGACDB01`]\(base/src/lgacdb01.cbl\), [`LGIPDB01`]\(base/src/lgipdb01.cbl\), and) Tj
+T*
+([`LGTESTC1`]\(base/src/lgtestc1.cbl\) using [`.bobz/tool_output/LGACDB01_LGACUS01_LGIPDB01_LGTEST) Tj
+T*
+(C1_paragraphs_1781817040872.json`]\(.bobz/tool_output/LGACDB01_LGACUS01_LGIPDB01_LGTESTC1_paragr) Tj
+T*
+(aphs_1781817040872.json\).) Tj
+T*
+() Tj
+T*
+(---) Tj
+T*
+() Tj
+T*
+(**End of Impact Analysis Report**) Tj
+ET
+endstream endobj
+xref
+0 34
+0000000000 65535 f 
+0000000015 00000 n 
+0000000064 00000 n 
+0000000218 00000 n 
+0000000286 00000 n 
+0000000412 00000 n 
+0000003729 00000 n 
+0000003855 00000 n 
+0000006746 00000 n 
+0000006872 00000 n 
+0000008307 00000 n 
+0000008435 00000 n 
+0000010888 00000 n 
+0000011016 00000 n 
+0000013772 00000 n 
+0000013900 00000 n 
+0000016328 00000 n 
+0000016456 00000 n 
+0000018992 00000 n 
+0000019120 00000 n 
+0000022010 00000 n 
+0000022138 00000 n 
+0000025006 00000 n 
+0000025134 00000 n 
+0000027186 00000 n 
+0000027314 00000 n 
+0000030451 00000 n 
+0000030579 00000 n 
+0000033344 00000 n 
+0000033472 00000 n 
+0000036188 00000 n 
+0000036316 00000 n 
+0000039373 00000 n 
+0000039501 00000 n 
+trailer << /Size 34 /Root 1 0 R >>
+startxref
+40080
+%%EOF
