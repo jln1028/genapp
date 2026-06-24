@@ -1,0 +1,232 @@
+       PROCESS SQL
+      ******************************************************************
+      *                                                                *
+      * MOTUPD01 - Motor Policy Update Service                         *
+      *                                                                *
+      * Extracted from: LGUPDB01                                       *
+      * Entry Point: UPDATE-MOTOR-DB2-INFO                             *
+      * Purpose: Update motor policy details including premium         *
+      *                                                                *
+      ******************************************************************
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID. MOTUPD01.
+       ENVIRONMENT DIVISION.
+       CONFIGURATION SECTION.
+      *
+       DATA DIVISION.
+
+       WORKING-STORAGE SECTION.
+
+      *----------------------------------------------------------------*
+      * Common defintions                                              *
+      *----------------------------------------------------------------*
+      * Run time (debug) infomation for this invocation
+        01  WS-HEADER.
+           03 WS-EYECATCHER            PIC X(16)
+                                        VALUE 'MOTUPD01------WS'.
+           03 WS-TRANSID               PIC X(4).
+           03 WS-TERMID                PIC X(4).
+           03 WS-TASKNUM               PIC 9(7).
+           03 WS-FILLER                PIC X.
+           03 WS-ADDR-DFHCOMMAREA      USAGE is POINTER.
+           03 WS-CALEN                 PIC S9(4) COMP.
+
+      * Variables for time/date processing
+       01  WS-ABSTIME                  PIC S9(8) COMP VALUE +0.
+       01  WS-TIME                     PIC X(8)  VALUE SPACES.
+       01  WS-DATE                     PIC X(10) VALUE SPACES.
+
+      * Error Message structure
+       01  ERROR-MSG.
+           03 EM-DATE                  PIC X(8)  VALUE SPACES.
+           03 FILLER                   PIC X     VALUE SPACES.
+           03 EM-TIME                  PIC X(6)  VALUE SPACES.
+           03 FILLER                   PIC X(9)  VALUE ' MOTUPD01'.
+           03 EM-VARIABLE.
+             05 FILLER                 PIC X(6)  VALUE ' CNUM='.
+             05 EM-CUSNUM              PIC X(10)  VALUE SPACES.
+             05 FILLER                 PIC X(6)  VALUE ' PNUM='.
+             05 EM-POLNUM              PIC X(10)  VALUE SPACES.
+             05 EM-SQLREQ              PIC X(16) VALUE SPACES.
+             05 FILLER                 PIC X(9)  VALUE ' SQLCODE='.
+             05 EM-SQLRC               PIC +9(5) USAGE DISPLAY.
+
+       01  CA-ERROR-MSG.
+           03 FILLER                   PIC X(9)  VALUE 'COMMAREA='.
+           03 CA-DATA                  PIC X(90) VALUE SPACES.
+      *----------------------------------------------------------------*
+
+      *----------------------------------------------------------------*
+      * Definitions required by SQL statement                          *
+      *   DB2 datatypes to COBOL equivalents                           *
+      *     SMALLINT    :   PIC S9(4) COMP                             *
+      *     INTEGER     :   PIC S9(9) COMP                             *
+      *----------------------------------------------------------------*
+      * Host variables for input to DB2 integer types
+       01 DB2-IN-INTEGERS.
+          03 DB2-POLICYNUM-INT         PIC S9(9) COMP.
+          03 DB2-M-VALUE-INT           PIC S9(9) COMP.
+          03 DB2-M-CC-SINT             PIC S9(4) COMP.
+          03 DB2-M-PREMIUM-INT         PIC S9(9) COMP.
+          03 DB2-M-ACCIDENTS-INT       PIC S9(9) COMP.
+
+      *  Host variables to store result of DB2 Fetch
+      *  Must be an SQL INCLUDE so available to SQL pre-compiler
+           EXEC SQL
+             INCLUDE LGPOLICY
+           END-EXEC.
+
+      *----------------------------------------------------------------*
+      *    DB2 CONTROL
+      *----------------------------------------------------------------*
+      * SQLCA DB2 communications area
+           EXEC SQL
+             INCLUDE SQLCA
+           END-EXEC.
+
+      ******************************************************************
+      *    L I N K A G E     S E C T I O N
+      ******************************************************************
+       LINKAGE SECTION.
+
+       01  DFHCOMMAREA.
+           EXEC SQL
+             INCLUDE LGCMAREA
+           END-EXEC.
+
+
+      ******************************************************************
+      *    P R O C E D U R E S
+      ******************************************************************
+       PROCEDURE DIVISION.
+
+      *----------------------------------------------------------------*
+       MAINLINE SECTION.
+
+      *----------------------------------------------------------------*
+      * Common code                                                    *
+      *----------------------------------------------------------------*
+      * initialize working storage variables
+           INITIALIZE WS-HEADER.
+      * set up general variable
+           MOVE EIBTRNID TO WS-TRANSID.
+           MOVE EIBTRMID TO WS-TERMID.
+           MOVE EIBTASKN TO WS-TASKNUM.
+      *----------------------------------------------------------------*
+      * initialize DB2 host variables
+           INITIALIZE DB2-IN-INTEGERS.
+
+      *----------------------------------------------------------------*
+      * Check commarea and obtain required details                     *
+      *----------------------------------------------------------------*
+      * If NO commarea received issue an ABEND
+           IF EIBCALEN IS EQUAL TO ZERO
+               MOVE ' NO COMMAREA RECEIVED' TO EM-VARIABLE
+               PERFORM WRITE-ERROR-MESSAGE
+               EXEC CICS ABEND ABCODE('LGCA') NODUMP END-EXEC
+           END-IF
+
+      * initialize commarea return code to zero
+           MOVE '00' TO CA-RETURN-CODE
+           MOVE EIBCALEN TO WS-CALEN.
+           SET WS-ADDR-DFHCOMMAREA TO ADDRESS OF DFHCOMMAREA.
+
+      * Convert commarea policy num to DB2 integer format
+           MOVE CA-POLICY-NUM   TO DB2-POLICYNUM-INT
+      * and save in error msg field incase required
+           MOVE CA-CUSTOMER-NUM TO EM-CUSNUM
+           MOVE CA-POLICY-NUM   TO EM-POLNUM
+
+      *----------------------------------------------------------------*
+      * Call procedure to update motor policy                          *
+      *----------------------------------------------------------------*
+           PERFORM UPDATE-MOTOR-DB2-INFO.
+
+      * Return to caller
+       END-PROGRAM.
+           EXEC CICS RETURN END-EXEC.
+
+       MAINLINE-EXIT.
+           EXIT.
+      *----------------------------------------------------------------*
+
+      *================================================================*
+      * Update row in Motor table which matches customer and           *
+      * policy number requested.                                       *
+      *================================================================*
+       UPDATE-MOTOR-DB2-INFO.
+
+      *    Move numeric commarea fields to DB2 Integer formats
+           MOVE CA-M-CC          TO DB2-M-CC-SINT
+           MOVE CA-M-VALUE       TO DB2-M-VALUE-INT
+           MOVE CA-M-PREMIUM     TO DB2-M-PREMIUM-INT
+           MOVE CA-M-ACCIDENTS   TO DB2-M-ACCIDENTS-INT
+
+           MOVE ' UPDATE MOTOR ' TO EM-SQLREQ
+           EXEC SQL
+             UPDATE MOTOR
+               SET
+                    MAKE              = :CA-M-MAKE,
+                    MODEL             = :CA-M-MODEL,
+                    VALUE             = :DB2-M-VALUE-INT,
+                    REGNUMBER         = :CA-M-REGNUMBER,
+                    COLOUR            = :CA-M-COLOUR,
+                    CC                = :DB2-M-CC-SINT,
+                    YEAROFMANUFACTURE = :CA-M-MANUFACTURED,
+                    PREMIUM           = :DB2-M-PREMIUM-INT,
+                    ACCIDENTS         = :DB2-M-ACCIDENTS-INT
+               WHERE
+                    POLICYNUMBER      = :DB2-POLICYNUM-INT
+           END-EXEC
+
+           IF SQLCODE NOT EQUAL 0
+      *      Non-zero SQLCODE from UPDATE statement
+             IF SQLCODE EQUAL 100
+               MOVE '01' TO CA-RETURN-CODE
+             ELSE
+               MOVE '90' TO CA-RETURN-CODE
+      *        Write error message to TD QUEUE(CSMT)
+               PERFORM WRITE-ERROR-MESSAGE
+             END-IF
+           END-IF.
+           EXIT.
+
+      *================================================================*
+      * Procedure to write error message to Queues                     *
+      *   message will include Date, Time, Program Name, Customer      *
+      *   Number, Policy Number and SQLCODE.                           *
+      *================================================================*
+       WRITE-ERROR-MESSAGE.
+      * Save SQLCODE in message
+           MOVE SQLCODE TO EM-SQLRC
+      * Obtain and format current time and date
+           EXEC CICS ASKTIME ABSTIME(WS-ABSTIME)
+           END-EXEC
+           EXEC CICS FORMATTIME ABSTIME(WS-ABSTIME)
+                     MMDDYYYY(WS-DATE)
+                     TIME(WS-TIME)
+           END-EXEC
+           MOVE WS-DATE TO EM-DATE
+           MOVE WS-TIME TO EM-TIME
+      * Write output message to TDQ
+           EXEC CICS LINK PROGRAM('LGSTSQ')
+                     COMMAREA(ERROR-MSG)
+                     LENGTH(LENGTH OF ERROR-MSG)
+           END-EXEC.
+      * Write 90 bytes or as much as we have of commarea to TDQ
+           IF EIBCALEN > 0 THEN
+             IF EIBCALEN < 91 THEN
+               MOVE DFHCOMMAREA(1:EIBCALEN) TO CA-DATA
+               EXEC CICS LINK PROGRAM('LGSTSQ')
+                         COMMAREA(CA-ERROR-MSG)
+                         LENGTH(LENGTH OF CA-ERROR-MSG)
+               END-EXEC
+             ELSE
+               MOVE DFHCOMMAREA(1:90) TO CA-DATA
+               EXEC CICS LINK PROGRAM('LGSTSQ')
+                         COMMAREA(CA-ERROR-MSG)
+                         LENGTH(LENGTH OF CA-ERROR-MSG)
+               END-EXEC
+             END-IF
+           END-IF.
+           EXIT.
